@@ -1,0 +1,74 @@
+.tabs {
+    overflow: hidden;
+    width: 100%;
+
+    .tabs-bar {}
+
+    .tabs-bar-inner-wrap {
+        overflow: hidden;
+        width: 100%;
+        white-space: nowrap;
+    }
+
+    .tabs-bar-iscroll {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .tabs-bar-iscroll-inner {
+        display: inline-block;
+        white-space: nowrap;
+        vertical-align: top;
+    }
+
+    .tab {
+        display: inline-block;
+        vertical-align: top;
+
+        .tab__text {
+            line-height: 40px;
+            padding: 20px 0;
+            color: #868585;
+            font-size: 26px;
+            text-align: center;
+        }
+    }
+
+    .tab.active {
+        .tab__text {
+            color: #111;
+        }
+    }
+
+    .tab-indicator {
+        overflow: hidden;
+        line-height: 0;
+        text-align: center;
+        -webkit-transition: all 0.3s ease-out;
+        transition: all 0.3s ease-out;
+    }
+
+    .tab-indicator-bar {
+        display: inline-block;
+        width: 50%;
+        height: 5px;
+        background: linear-gradient(63deg, rgba(255, 186, 52, 1) 0%, rgba(255, 217, 100, 1) 100%);
+        vertical-align: top;
+    }
+
+    .tabs-content {
+        overflow: hidden;
+    }
+
+    .tabs-content-inner-wrap {
+        width: 100%;
+        white-space: nowrap;
+    }
+
+    .panel {
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+        vertical-align: top;
+    }
+}
