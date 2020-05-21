@@ -37,6 +37,7 @@ function activeKeyIsValid(props, key) {
  *    activeKey={String}
  *    pageSize={Number}
  *    useIndicator={Boolean}
+ *    renderTabBar={Function(defaultTabBar) {}}
  *    renderTabIndicator={ReactNode|Function(activeKey) {}}
  *    onChange={Function(activeKey) {}} >
  *    <TabPanel tab={String|ReactNode} key={String} forceRender={Boolean}>
@@ -104,6 +105,7 @@ export default class extends React.Component {
         const {
             pageSize,
             useIndicator,
+            renderTabBar,
             renderTabIndicator
         } = this.props;
 
@@ -113,7 +115,7 @@ export default class extends React.Component {
 
         this.tabBar = <TabBar />
 
-        const tabBar = React.cloneElement(this.tabBar, {
+        let tabBar = React.cloneElement(this.tabBar, {
             panels: children,
             pageSize,
             useIndicator,
@@ -121,6 +123,10 @@ export default class extends React.Component {
             activeKey,
             onTabClick: this.onTabClick,
         });
+
+        if (typeof renderTabBar === "function") {
+            tabBar = renderTabBar(tabBar);
+        }
 
         const tabContent = React.cloneElement(<TabContent />, {
             children: children,

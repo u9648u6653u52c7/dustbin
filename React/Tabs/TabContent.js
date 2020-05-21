@@ -9,11 +9,13 @@ export default function (props) {
 
     let i;
     const panel = children.map((child, index) => {
-        const { props, key } = child;
-        if (key === activeKey) { i = index; }
+        const { key } = child;
+        const active = key === activeKey;
+        const newChild = React.cloneElement(child, { active });
+        if (active) { i = index; }
         return (<div key={key}
-            className="panel">
-            {props.children}
+            className={"panel " + (active ? "active" : "inactive")}>
+            {newChild}
         </div>);
     });
 

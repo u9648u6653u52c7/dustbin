@@ -71,4 +71,8 @@
         width: 100%;
         vertical-align: top;
     }
+
+    .panel.inactive {
+        height: 0;
+    }
 }

@@ -15,11 +15,16 @@ export default class extends React.Component {
 
     render() {
         const {
+            active,
+            forceRender,
             children
-        } = this.props
+        } = this.props;
+
+        this.actived = this.actived || active;
+        const shouldRender = this.actived || forceRender;
 
         return (
-            children
+            shouldRender ? children : null
         );
     }
 }
