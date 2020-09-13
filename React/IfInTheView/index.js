@@ -21,22 +21,38 @@ function getVisualViewportInfo() {
 }
 
 function getElemBoundingClientRect(node) {
-    return "getBoundingClientRect" in node
-        ? node.getBoundingClientRect() : {};
+    if (!node
+        || node.nodeType != node.ELEMENT_NODE
+        || typeof node.getBoundingClientRect !== "function") {
+        return {};
+    } else {
+        return node.getBoundingClientRect();
+    }
 }
 
-function inTheView(node) {
-    var rect = getElemBoundingClientRect(node);
+export function inTheView(node, options) {
     var viewport = getVisualViewportInfo();
+    var rect = getElemBoundingClientRect(node);
 
     if (isEmptyObject(rect)) {
         return true;
     }
 
-    if (rect.top > viewport.height
-        || rect.bottom < 0
-        || rect.left > viewport.width
-        || rect.right < 0) {
+    options = options || {};
+
+    var offsetLeft = typeof options.offsetLeft === "number"
+        ? options.offsetLeft : 0;
+    var offsetTop = typeof options.offsetTop === "number"
+        ? options.offsetTop : 0;
+    var offsetRight = typeof options.offsetRight === "number"
+        ? options.offsetRight : 0;
+    var offsetBottom = typeof options.offsetBottom === "number"
+        ? options.offsetBottom : 0;
+
+    if (rect.top > viewport.height - offsetBottom
+        || rect.bottom < 0 + offsetTop
+        || rect.left > viewport.width - offsetRight
+        || rect.right < 0 + offsetLeft) {
         return false;
     } else {
         return true;
@@ -49,11 +65,14 @@ function inTheView(node) {
  * @description 
  * <IfInTheView
  *  attrs={{[key: string]: any}}
+ *  placeholder={ReactNode}
+ *  removeSentry={Boolean}
+ *  options={Object}
  *  useCapture={boolean}
  *  window={DOM}
  * />
  */
-export default class extends React.Component {
+export default class extends React.PureComponent {
     constructor(props) {
         super(props);
         this.state = { inTheView: false };
@@ -70,7 +89,7 @@ export default class extends React.Component {
             if (!obj.hasOwnProperty(k)) { continue; }
             this[k] = () => {
                 if (obj[k] in win) {
-                    const arr = ["scroll", "resize"];
+                    const arr = ["scroll", "resize", "DOMNodeRemoved"];
                     for (let i = 0; i < arr.length; i++) {
                         win[obj[k]](arr[i], this.handler, useCapture);
                     }
@@ -81,7 +100,8 @@ export default class extends React.Component {
 
     handler = () => {
         const node = this.$ref.current;
-        if (node && inTheView(node)) {
+        const { options } = this.props;
+        if (node && inTheView(node, options)) {
             this.setState({ inTheView: true });
             this.removeEvent();
         }
@@ -99,14 +119,31 @@ export default class extends React.Component {
     }
 
     render() {
-        const { children } = this.props;
         const { inTheView } = this.state;
+        const {
+            children,
+            placeholder,
+            removeSentry = true
+        } = this.props;
+
+        if (!removeSentry) {
+            return (
+                <div {...this.props.attrs} ref={this.$ref}>
+                    {inTheView
+                        ? typeof children === "function"
+                            ? children() : children
+                        : placeholder || null}
+                </div>
+            );
+        }
 
         return (
             inTheView
                 ? typeof children === "function"
                     ? children() : children
-                : <div {...this.props.attrs} ref={this.$ref}></div>
+                : <div {...this.props.attrs} ref={this.$ref}>
+                    {placeholder}
+                </div>
         ) || null;
     }
 }
