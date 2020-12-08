@@ -2,20 +2,35 @@
  * 倒计时类库
  * @class Countdown
  */
+function noop() { }
+
+function isNumber(v) {
+    return !isNaN(v) && typeof v === "number";
+}
+
+function isFuntion(v) {
+    return typeof v === "function";
+}
+
 export default class Countdown {
 
     /**
      * Creates an instance of Countdown.
      * @param {Number} ms
-     * @param {Function} fn
+     * @param {Function} onTick
+     * @param {Function} onStop
+     * @param {Function} onOver
      * @param {[Number]} delay
+     * @param {[Number]} offset
      * @memberof Countdown
      */
-    constructor(ms, fn, delay, offset) {
-        this.ms = typeof ms === "number" ? ms : 0;
-        this.fn = typeof fn === "function" ? fn : function () { };
-        this.delay = typeof delay === "number" ? delay : 1000;
-        this.offset = typeof offset === "number" ? offset : 10000;
+    constructor(ms, onTick, onOver, onStop, delay, offset) {
+        this.ms = isNumber(ms) ? ms : 0;
+        this.onTick = isFuntion(onTick) ? onTick : noop;
+        this.onOver = isFuntion(onOver) ? onOver : noop;
+        this.onStop = isFuntion(onStop) ? onStop : noop;
+        this.delay = isNumber(delay) ? delay : 1e3;
+        this.offset = isNumber(offset) ? offset : 1e4;
     }
 
     /**
@@ -39,11 +54,12 @@ export default class Countdown {
             if (nextTime < 0) {
                 nextTime = 0
             }
-            that.fn.call(that, Countdown.format(that.ms));
+            that.onTick(Countdown.format(that.ms));
             that.ms -= that.delay;
 
             if (that.ms < 0) {
                 that.stop();
+                that.onOver();
             } else {
                 that.timer = setTimeout(walk, nextTime);
             }
@@ -61,7 +77,8 @@ export default class Countdown {
      * @memberof Countdown
      */
     stop() {
-        this.timer && clearTimeout(this.timer);
+        clearTimeout(this.timer);
+        this.onStop();
         return this;
     }
 
@@ -77,7 +94,8 @@ export default class Countdown {
             d: Math.floor(s / 86400),
             h: Math.floor(s % 86400 / 3600),
             m: Math.floor(s % 86400 % 3600 / 60),
-            s: s % 86400 % 3600 % 60
+            s: Math.floor(s % 86400 % 3600 % 60),
+            __s: s
         };
     }
 }

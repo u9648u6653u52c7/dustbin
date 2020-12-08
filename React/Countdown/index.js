@@ -6,7 +6,9 @@ export default function (props) {
         ms = 0,
         delay,
         offset,
-        format = "还剩{d}天 {h}:{m}:{s}",
+        onOver,
+        onStop,
+        format = "还剩{d}天 {hh}:{mm}:{ss}",
         children
     } = props;
 
@@ -16,16 +18,24 @@ export default function (props) {
         const countdown = new Countdown(
             ms,
             obj => setTimeObj(obj),
+            onOver,
+            onStop,
             delay,
             offset
         ).start();
 
         return () => countdown.stop();
-    }, []);
+    }, [ms, onOver, onStop, delay, offset]);
 
     const elem = typeof children === "function"
         ? children(timeObj)
-        : format.replace(/{(\w+)}/g, (m, g) => timeObj[g] || 0)
+        : format.replace(/{((\w)\2*)}/g, (m, g1, g2) => {
+            const len = g1.length;
+            const val = timeObj[g2] + "";
+            return val.length >= len
+                ? val
+                : ((new Array(len + 1)).join("0") + val).substr(-len);
+        });
 
     return <>{elem}</>;
 }
