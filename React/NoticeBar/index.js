@@ -1,4 +1,5 @@
 import './index.less'
+import throttle from './throttle'
 import React, { useState, useEffect, useRef } from 'react'
 
 /**
@@ -12,9 +13,9 @@ function getClsName() {
     return args.join(' ')
 }
 
-const hornIcon = <span className="iconfont yhicon-horn" />;
-const closeIcon = <span className="iconfont yhicon-close" />;
-const arrowRightIcon = <span className="iconfont yhicon-arrow-right" />;
+const hornIcon = <span className="iconfont yhicon-horn" />
+const closeIcon = <span className="iconfont yhicon-close" />
+const arrowRightIcon = <span className="iconfont yhicon-arrow-right" />
 
 export default function (props) {
     const {
@@ -22,79 +23,110 @@ export default function (props) {
         content,
         children,
         direction,
+        delay,
         fps,
         icon,
         mode,
         action,
         onClick,
-    } = props;
+        listenResizeEvt = false
+    } = props
 
-    const text = content || children;
-    if (!(text && typeof text === "string")) {
-        return null;
+    const text = content || children
+    if (!(text && typeof text === 'string')) {
+        return null
     }
 
-    const _fps = typeof fps === "number" ? fps : 1000 / 40;
-    const position = direction == "vertical" ? direction : "horizontal";
-    const [show, setShow] = useState(true);
-    const [flag, setFlag] = useState(false);
-    const [duration, setDuration] = useState("");
-    const $text = useRef();
-    const $inner = useRef();
+    const _fps = typeof fps === 'number' ? fps : 1000 / 40
+    const animationDdelay = typeof delay === 'string' ? delay : '2s'
+    const position = direction == 'vertical' ? direction : 'horizontal'
+    const [show, setShow] = useState(true)
+    const [flag, setFlag] = useState(false)
+    const [duration, setDuration] = useState('')
+    const flagMark = useRef(false)
+    const $text = useRef()
+    const $inner = useRef()
 
     useEffect(() => {
-        const textElem = $text.current;
-        const innerElem = $inner.current;
-        if (!(innerElem && textElem)) { return; }
-        const textElemArea = textElem.offsetWidth * textElem.offsetHeight;
-        const innerElemArea = innerElem.offsetWidth * innerElem.offsetHeight;
-        const isOverflow = textElemArea > innerElemArea;
-        if (!isOverflow) { return; }
-        // 计算动画的animationDuration时间
-        function calcDuration() {
-            const duration = Math.ceil(position == "vertical"
-                ? textElem.offsetHeight * _fps
-                : (textElemArea / innerElem.offsetHeight) * _fps
-            ) + "ms";
-            setDuration(duration);
-        }
-        setFlag(true);
-        calcDuration();
-        window.addEventListener("resize", calcDuration);
-        return () => window.removeEventListener("resize", calcDuration);
-    }, []);
+        const textElem = $text.current
+        const innerElem = $inner.current
+        if (!(innerElem && textElem)) { return }
 
-    const style = {};
+        function getTextElemArea() {
+            return textElem.offsetWidth * textElem.offsetHeight
+        }
+
+        function getInnerElemArea() {
+            return innerElem.offsetWidth * innerElem.offsetHeight
+        }
+
+        function hasOverflow() {
+            if (flagMark.current) {
+                return (getTextElemArea() / 2) > getInnerElemArea()
+            } else {
+                return getTextElemArea() > getInnerElemArea()
+            }
+        }
+
+        function getDuration() {
+            return Math.ceil(position == 'vertical'
+                ? textElem.offsetHeight * _fps
+                : (getTextElemArea() / innerElem.offsetHeight) * _fps
+            ) + 'ms'
+        }
+
+        const setState = throttle(() => {
+            if (hasOverflow()) {
+                setFlag(true)
+                setDuration(getDuration())
+                flagMark.current = true
+            } else {
+                setFlag(false)
+                setDuration('')
+                flagMark.current = false
+            }
+        }, 1e3, { leading: true })
+
+        setState()
+
+        if (listenResizeEvt) {
+            window.addEventListener('resize', setState)
+            return () => window.removeEventListener('resize', setState)
+        }
+    }, [])
+
+    const style = {}
     if (flag && duration) {
-        style.animationDuration = duration;
+        style.animationDuration = duration
+        style.animationDelay = animationDdelay
     }
 
     const actionElem = (mode => {
-        if (mode == "closable") {
+        if (mode == 'closable') {
             return <div className="notice-bar__right" onClick={() => {
-                if (typeof onClick === "function") { onClick(); }
-                setShow(false);
-            }}>{action || closeIcon}</div>;
+                if (typeof onClick === 'function') { onClick() }
+                setShow(false)
+            }}>{action || closeIcon}</div>
         }
 
-        if (mode == "link") {
+        if (mode == 'link') {
             return <div className="notice-bar__right" onClick={() => {
-                if (typeof onClick === "function") { onClick(); }
-            }}>{action || arrowRightIcon}</div>;
+                if (typeof onClick === 'function') { onClick() }
+            }}>{action || arrowRightIcon}</div>
         }
 
-        return null;
-    })(mode);
+        return null
+    })(mode)
 
-    return show ? <div className={getClsName("notice-bar", className)}>
+    return show ? <div className={getClsName('notice-bar', className)}>
         <div className="notice-bar__left">{icon || hornIcon}</div>
         {actionElem}
         <div className="notice-bar__content">
             <div className="notice-bar__inner" ref={$inner}>
-                <div className={getClsName("notice-bar__text", flag ? position : "")} style={style} ref={$text}>
-                    {text}{flag && position == "vertical" ? <br /> : null}{flag ? text : null}
+                <div className={getClsName('notice-bar__text', flag ? position : '')} style={style} ref={$text}>
+                    {text}{flag && position == 'vertical' ? <br /> : null}{flag ? text : null}
                 </div>
             </div>
         </div>
-    </div> : null;
+    </div> : null
 }
