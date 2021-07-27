@@ -33,9 +33,7 @@ export default function (props) {
     } = props
 
     const text = content || children
-    if (!(text && typeof text === 'string')) {
-        return null
-    }
+    if (!text) { return null }
 
     const _fps = typeof fps === 'number' ? fps : 1000 / 40
     const animationDdelay = typeof delay === 'string' ? delay : '2s'
@@ -97,6 +95,8 @@ export default function (props) {
 
     const style = {}
     if (flag && duration) {
+        style.WebkitAnimationDuration = duration
+        style.WebkitAnimationDelay = animationDdelay
         style.animationDuration = duration
         style.animationDelay = animationDdelay
     }
